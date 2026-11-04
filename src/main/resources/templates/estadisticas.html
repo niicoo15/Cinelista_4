@@ -5,44 +5,112 @@
     <th:block th:replace="~{fragments/cabecera :: comunes}"></th:block>
     <th:block th:replace="~{fragments/cabecera :: datatables}"></th:block>
     <th:block th:replace="~{fragments/cabecera :: datatables-buttons}"></th:block>
+
+    <style>
+        .dataTables_filter {
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-light">
 
 <div th:replace="~{fragments/nav :: nav}"></div>
 
-<h1>Estadisticas</h1>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-normal">Estadísticas</h1>
+    </div>
 
-<!--
-  TODO:
-  1) Comprobar jQuery y DataTables (CDN o local) ya agregadas
-  2) Inicializad DataTables sobre la tabla de abajo con la opcion "ajax"
-     apuntando a GET /api/estadisticas (endpoint que crearéis vosotros
-     en el controlador EstadisticasController).
-  3) Id completando: buscador, footerCallback con el total, columna con
-     barra grafica, boton de exportar a CSV con nombre propio.
--->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <table id="tabla-estadisticas" class="table table-bordered text-center align-middle w-100 m-0">
+                <thead>
+                <tr>
+                    <th>Titulo</th>
+                    <th>Genero</th>
+                    <th>Taquilla</th>
+                    <th>Nota</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
 
-<table id="tabla-estadisticas">
-    <thead>
-    <tr>
-        <th>Titulo</th>
-        <th>Genero</th>
-        <th>Taquilla</th>
-        <th>Nota</th>
-    </tr>
-    </thead>
-    <tbody>
-    <!-- Las filas las rellenara DataTables via ajax -->
-    </tbody>
-    <tfoot>
-    <tr>
-        <th></th>
-        <th></th>
-        <th></th>
-        <th></th>
-    </tr>
-    </tfoot>
-</table>
+<script>
+    $(document).ready(function() {
+        $('#tabla-estadisticas').DataTable({
+            ajax: {
+                url: '/api/estadisticas',
+                dataSrc: ''
+            },
+            searching: true,
+            columns: [
+                { data: 'titulo' },
+                { data: 'genero' },
+                { data: 'taquilla' },
+                {
+                    data: 'nota',
+                    // EJERCICIO 5: Renderizar barra gráfica
+                    render: function (data, type, row) {
+                        // Solo lo cambiamos visualmente ('display'), para ordenar/filtrar sigue usando el número
+                        if (type === 'display') {
+                            // Calculamos el porcentaje (nota de 0 a 10 -> 0% a 100%)
+                            var porcentaje = data * 10;
+                            // Creamos el HTML de la barra de progreso de Bootstrap
+                            return `
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <span class="me-2 fw-bold">${data}</span>
+                                    <div class="progress" style="width: 100px; height: 12px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: ${porcentaje}%;" aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        return data;
+                    }
+                }
+            ],
+            dom: "<'row'<'col-sm-12 col-md-4'l><'col-sm-12 col-md-4'B><'col-sm-12 col-md-4'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            buttons: [
+                {
+                    extend: 'csvHtml5',
+                    text: 'Exportar CSV',
+                    className: 'btn btn-success btn-sm',
+                    filename: 'informe_estadisticas_cinelista'
+                }
+            ],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            },
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+                var intVal = function (i) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+                };
+                var total = api
+                    .column(2)
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+                $(api.column(2).footer()).html(total + ' €');
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

@@ -8,15 +8,8 @@
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container">
-        <a class="navbar-brand" th:href="@{/mi-lista}">CineLista</a>
-        <div class="navbar-nav">
-            <a class="nav-link" th:href="@{/mi-lista}">Mi Lista</a>
-            <a class="nav-link active" th:href="@{/anadir-titulo}">Añadir título</a>
-        </div>
-    </div>
-</nav>
+<!-- Barra de navegación centralizada de Thymeleaf -->
+<div th:replace="~{fragments/nav :: nav}"></div>
 
 <main class="container my-4" style="max-width: 600px;">
     <div class="card shadow-sm">
